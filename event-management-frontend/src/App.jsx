@@ -19,7 +19,7 @@ function App() {
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/" element={<div>Hello World</div>} />
+        <Route path="/" element={<Home />} />
         <Route path="/register" element={!isAuthenticated() ? <Register /> : <Navigate to="/dashboard" />} />
         <Route path="/login" element={!isAuthenticated() ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/dashboard" element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" />} />
