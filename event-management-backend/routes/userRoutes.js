@@ -3,6 +3,7 @@ const router = express.Router();
 const { User } = require('../models'); // Import the User model
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
+const jwt = require('jsonwebtoken'); 
 
 // CREATE: Add a new user
 router.post('/register', async (req, res) => {
@@ -39,7 +40,14 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  return res.status(200).json({ message: 'User authenticated successfully', userId: user.id });
+  // Generate a JWT token
+  const token = jwt.sign({ userId: user.id }, 'your-secret-key', { expiresIn: '1h' }); // Replace 'your-secret-key' with your actual secret key
+
+  return res.status(200).json({
+    message: 'User authenticated successfully',
+    token: token,  // Include the token in the response
+    userId: user.id
+  });
 });
 
 // READ: Get all users

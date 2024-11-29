@@ -1,22 +1,32 @@
-// src/components/Login.jsx
 import React, { useState } from 'react';
-import API from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { login as loginUser } from '../services/auth';
+import axios from 'axios';
 
 function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault();  // Prevent default form submission behavior
     try {
-      const { data } = await API.post('/users/login', formData);
-      loginUser(data.token);
-      alert('Login successful!');
-      navigate('/dashboard');
+      const { data } = await axios.post('http://localhost:5000/api/users/login', {
+        email: formData.email,  // Use formData.email instead of email
+        password: formData.password,  // Use formData.password instead of password
+      });
+  
+      console.log(data);  // This should include the token and userId
+  
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);  // Store the token with 'authToken' key
+        // Optionally, store the userId or other data in context/state
+        navigate('/dashboard');  // Redirect to dashboard or home page
+      } else {
+        alert('No token received');
+      }
     } catch (error) {
-      alert(error.response?.data || 'Login failed');
+      console.error('Login error:', error.response?.data || error.message);
+      alert('Login failed');
     }
   };
 
