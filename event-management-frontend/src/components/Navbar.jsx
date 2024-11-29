@@ -18,8 +18,10 @@ function Navbar() {
       <div>
         {isAuthenticated() ? (
           <>
-            <span>Welcome, {user && user.userId}</span>
             <Link to="/dashboard" style={styles.link}>Dashboard</Link>
+            <Link to="/bookings" style={styles.link}>Bookings</Link>
+            <Link to="/events" style={styles.link}>Events</Link> {/* New Events Link */}
+            <Link to="/profile" style={styles.link}>Profile</Link>
             <button onClick={handleLogout} style={styles.button}>Logout</button>
           </>
         ) : (

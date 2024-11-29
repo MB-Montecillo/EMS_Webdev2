@@ -20,7 +20,7 @@ function EventList() {
 
   return (
     <div style={styles.container}>
-      <h2>Available Events</h2>
+      <h2>CUrrent Events</h2>
       <ul style={styles.list}>
         {events.map((event) => (
           <li key={event.event_id} style={styles.listItem}>

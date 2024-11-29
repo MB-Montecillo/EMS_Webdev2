@@ -37,13 +37,26 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    location: {
-      type: DataTypes.STRING,
+    location_id: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Locations', // Reference the Locations table
+        key: 'location_id', // Ensure this matches the primary key in the Locations table
+      },
       allowNull: true,
     },
   }, {
     timestamps: false, // Disable timestamps
-});
+  });
+
+  // Define the association between Event and Location (optional, if you need it in the model)
+  Event.associate = (models) => {
+    // Define a many-to-one relationship between Event and Location
+    Event.belongsTo(models.Location, {
+      foreignKey: 'location_id',
+      as: 'location', // You can access location details as 'location' in an event
+    });
+  };
 
   return Event;
 };

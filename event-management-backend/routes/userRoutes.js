@@ -50,6 +50,39 @@ router.post('/login', async (req, res) => {
   });
 });
 
+// Middleware to authenticate the user using JWT token
+const authenticateJWT = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  jwt.verify(token, 'your-secret-key', (err, decoded) => {  // Replace 'your-secret-key' with your actual secret key
+    if (err) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    req.userId = decoded.userId; // Set the userId from the token
+    next(); // Continue to the next middleware or route handler
+  });
+};
+
+// GET: Get the logged-in user's information
+router.get('/me', authenticateJWT, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.userId); // Get user based on the userId from the token
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json(user); // Send the user info back in the response
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // READ: Get all users
 router.get('/', async (req, res) => {
   try {

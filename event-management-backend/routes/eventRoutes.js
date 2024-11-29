@@ -13,11 +13,11 @@ router.post('/', async (req, res) => {
       available_slots,
       start_date,
       end_date,
-      location,
+      location_id,
     } = req.body;
 
     // Validation checks
-    if (!organizer_id || !event_name || !duration || !available_slots || !start_date || !end_date || !location) {
+    if (!organizer_id || !event_name || !duration || !available_slots || !start_date || !end_date || !location_id) {
       return res.status(400).json({ error: 'Required fields are missing' });
     }
 
@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
       available_slots,
       start_date,
       end_date,
-      location,
+      location_id,
     });
 
     return res.status(201).json(newEvent);
@@ -76,7 +76,7 @@ router.put('/:id', async (req, res) => {
       available_slots,
       start_date,
       end_date,
-      location,
+      location_id,
     } = req.body;
 
     const event = await Event.findByPk(req.params.id);
@@ -85,7 +85,10 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    // Update the event
+    // Ensure location_id is handled properly (if provided in the request)
+    const updatedLocationId = location_id !== undefined ? location_id : event.location_id;
+
+    // Update the event with the new data
     await event.update({
       event_name,
       description,
@@ -93,7 +96,7 @@ router.put('/:id', async (req, res) => {
       available_slots,
       start_date,
       end_date,
-      location,
+      location_id: updatedLocationId, // Only update if location_id is passed or it remains the same
     });
 
     return res.status(200).json(event);

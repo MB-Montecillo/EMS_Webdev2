@@ -25,9 +25,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    slots_reserved: {
+      type: DataTypes.INTEGER,  // Field to track the number of reserved slots
+      allowNull: false,
+      defaultValue: 1,  // Assuming each booking reserves one slot
+    },
   }, {
     timestamps: false, // Disable timestamps
-});
+  });
 
   return Booking;
 };

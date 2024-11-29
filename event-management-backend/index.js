@@ -5,6 +5,7 @@ const cors = require('cors');
 const bookingRoutes = require('./routes/bookingRoutes.js'); // Import the route
 const eventRoutes = require('./routes/eventRoutes.js'); // Import the event routes
 const userRoutes = require('./routes/userRoutes.js'); // Import the user routes
+const locationRoutes = require('./routes/locationRoutes');
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(cors({ origin: 'http://localhost:5173' }));
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/locations', locationRoutes);
 
 //Start the server
 app.listen(PORT, () => {
