@@ -2,37 +2,44 @@ const express = require('express');
 const router = express.Router();
 const { User } = require('../models'); // Import the User model
 const bcrypt = require('bcrypt');
+const db = require('../config/db');
 
 // CREATE: Add a new user
-router.post('/', async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+router.post('/register', async (req, res) => {
+  const { name, email, password, role } = req.body;
 
-    // Validation checks
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ error: 'Required fields are missing' });
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const sql = 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)';
+  const values = [name, email, hashedPassword, role];
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error('Error inserting user:', err);
+      return res.status(500).json({ error: 'Database error' });
     }
+    res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
+  });
+});
 
-    // Check for valid role
-    if (!["organizer", "attendee"].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role provided' });
-    }
+// LOGIN: Authenticate a user
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
 
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await User.findOne({ where: { email } });
 
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role,
-    });
-
-    return res.status(201).json(newUser);
-  } catch (error) {
-    console.error('Error creating user:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password' });
   }
+
+  const validPassword = await bcrypt.compare(password, user.password);
+
+  if (!validPassword) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  return res.status(200).json({ message: 'User authenticated successfully', userId: user.id });
 });
 
 // READ: Get all users
