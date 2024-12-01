@@ -5,51 +5,6 @@ const bcrypt = require('bcrypt');
 const db = require('../config/db');
 const jwt = require('jsonwebtoken'); 
 
-// CREATE: Add a new user
-router.post('/register', async (req, res) => {
-  const { name, email, password, role } = req.body;
-
-  // Hash the password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const sql = 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)';
-  const values = [name, email, hashedPassword, role];
-
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.error('Error inserting user:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
-  });
-});
-
-// LOGIN: Authenticate a user
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  const user = await User.findOne({ where: { email } });
-
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
-
-  const validPassword = await bcrypt.compare(password, user.password);
-
-  if (!validPassword) {
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
-
-  // Generate a JWT token
-  const token = jwt.sign({ userId: user.id }, 'your-secret-key', { expiresIn: '1h' }); // Replace 'your-secret-key' with your actual secret key
-
-  return res.status(200).json({
-    message: 'User authenticated successfully',
-    token: token,  // Include the token in the response
-    userId: user.id
-  });
-});
-
 // Middleware to authenticate the user using JWT token
 const authenticateJWT = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
@@ -66,6 +21,61 @@ const authenticateJWT = (req, res, next) => {
     next(); // Continue to the next middleware or route handler
   });
 };
+
+// CREATE: Add a new user
+router.post('/register', async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  try {
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const sql = 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)';
+    const values = [name, email, hashedPassword, role];
+
+    db.query(sql, values, (err, result) => {
+      if (err) {
+        console.error('Error inserting user:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
+    });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// LOGIN: Authenticate a user
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign({ userId: user.id }, 'your-secret-key', { expiresIn: '1h' }); // Replace 'your-secret-key' with your actual secret key
+
+    return res.status(200).json({
+      message: 'User authenticated successfully',
+      token: token,  // Include the token in the response
+      userId: user.id
+    });
+  } catch (error) {
+    console.error('Error during login:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // GET: Get the logged-in user's information
 router.get('/me', authenticateJWT, async (req, res) => {
@@ -112,9 +122,9 @@ router.get('/:id', async (req, res) => {
 
 // UPDATE: Update a user by ID
 router.put('/:id', async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+  const { name, email, password, role } = req.body;
 
+  try {
     const user = await User.findByPk(req.params.id);
 
     if (!user) {

@@ -22,18 +22,27 @@ function BookingForm({ eventId }) {
       }
     };
 
-    fetchEventDetails();
-    
-    // Assuming you have some way of fetching the userId (e.g., from a context or global state)
     const fetchUserId = async () => {
       try {
-        const userResponse = await API.get('/users/me'); // Example endpoint for fetching logged-in user's info
+        // Assuming token is stored in localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('You need to be logged in!');
+          return;
+        }
+
+        // Include token in the headers for authorization
+        const userResponse = await API.get('/users/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setUserId(userResponse.data.id); // Set the user ID
       } catch (error) {
         console.error('Error fetching user info:', error);
+        alert('Error fetching user information. Please login again.');
       }
     };
-    
+
+    fetchEventDetails();
     fetchUserId();
   }, [eventId]);
 
@@ -70,7 +79,8 @@ function BookingForm({ eventId }) {
         slots_reserved: slotsReserved,
       });
       alert('Booking successful!');
-      window.location.reload(); // Reload to update available slots
+      // Dynamically update available slots without reloading the page
+      setAvailableSlots(availableSlots - slotsReserved);
     } catch (error) {
       alert(error.response?.data || 'Booking failed');
     }
