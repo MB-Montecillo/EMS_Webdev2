@@ -1,34 +1,55 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { login as loginUser } from '../services/auth';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false); // Loading state
   const navigate = useNavigate();
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();  // Prevent default form submission behavior
+    e.preventDefault(); // Prevent default form submission behavior
+
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      alert('Please fill in both fields');
+      return;
+    }
+
+    setLoading(true); // Set loading to true
     try {
-      const { data } = await axios.post('http://localhost:5000/api/users/login', {
-        email: formData.email,  // Use formData.email instead of email
-        password: formData.password,  // Use formData.password instead of password
-      });
-  
-      console.log(data);  // This should include the token and userId
-  
+      const response = await axios.post('http://localhost:5000/api/users/login', formData);
+      const { data } = response;
+
+      console.log('Login successful:', data); // Debugging purpose
+
       if (data.token) {
-        localStorage.setItem('authToken', data.token);  // Store the token with 'authToken' key
-        // Optionally, store the userId or other data in context/state
-        navigate('/dashboard');  // Redirect to dashboard or home page
+        localStorage.setItem('authToken', data.token); // Store token in localStorage
+        localStorage.setItem('userId', data.userId); 
+        //navigate('/dashboard'); // Redirect to dashboard
+        window.location.href = '/dashboard';
       } else {
-        alert('No token received');
+        alert('Login failed: No token received');
       }
     } catch (error) {
-      console.error('Login error:', error.response?.data || error.message);
-      alert('Login failed');
+      const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
+      console.error('Login error:', errorMessage);
+      alert(errorMessage); // Display error message
+    } finally {
+      setLoading(false); // Reset loading state
     }
   };
+
+
+
 
   return (
     <div style={styles.container}>

@@ -6,6 +6,7 @@ export function login(token) {
 
 export function logout() {
   localStorage.removeItem('authToken');
+  window.location.href = '/login';
 }
 
 export const getCurrentUser = () => {

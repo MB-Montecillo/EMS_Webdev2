@@ -7,8 +7,8 @@ function BookingForm({ eventId }) {
   const [availableSlots, setAvailableSlots] = useState(0); // To store available slots of the event
   const [startDate, setStartDate] = useState(''); // Event start date
   const [endDate, setEndDate] = useState(''); // Event end date
-  const [userId, setUserId] = useState(null); // To store the logged-in user ID
-
+  const [userId, setUserId] = useState(localStorage.getItem('userId') || '');
+  
   // Fetch event details to get available slots, start date, and end date
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -22,28 +22,8 @@ function BookingForm({ eventId }) {
       }
     };
 
-    const fetchUserId = async () => {
-      try {
-        // Assuming token is stored in localStorage
-        const token = localStorage.getItem('token');
-        if (!token) {
-          alert('You need to be logged in!');
-          return;
-        }
-
-        // Include token in the headers for authorization
-        const userResponse = await API.get('/users/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUserId(userResponse.data.id); // Set the user ID
-      } catch (error) {
-        console.error('Error fetching user info:', error);
-        alert('Error fetching user information. Please login again.');
-      }
-    };
-
-    fetchEventDetails();
-    fetchUserId();
+  fetchEventDetails();
+    
   }, [eventId]);
 
   const handleBooking = async (e) => {
