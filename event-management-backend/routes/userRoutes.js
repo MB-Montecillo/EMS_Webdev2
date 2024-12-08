@@ -24,26 +24,17 @@ const authenticateJWT = (req, res, next) => {
 
 // CREATE: Add a new user
 router.post('/register', async (req, res) => {
+  try{
   const { name, email, password, role } = req.body;
 
-  try {
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    const sql = 'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)';
-    const values = [name, email, hashedPassword, role];
-
-    db.query(sql, values, (err, result) => {
-      if (err) {
-        console.error('Error inserting user:', err);
-        return res.status(500).json({ error: 'Database error' });
-      }
-      res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
-    });
-  } catch (error) {
-    console.error('Error registering user:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+  const newUser = await User.create({ name, email,  password: hashedPassword, role });
+  res.status(201).json(newUser);
+} catch (error) {
+  res.status(500).json({ message: error.message });
+}
 });
 
 // LOGIN: Authenticate a user
@@ -64,12 +55,12 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ userId: user.id }, 'your-secret-key', { expiresIn: '1h' }); // Replace 'your-secret-key' with your actual secret key
+    const token = jwt.sign({ userId: user.user_id}, 'your-secret-key', { expiresIn: '1h' }); // Replace 'your-secret-key' with your actual secret key
 
     return res.status(200).json({
       message: 'User authenticated successfully',
       token: token,  // Include the token in the response
-      userId: user.id
+      userId: user.user_id
     });
   } catch (error) {
     console.error('Error during login:', error);
