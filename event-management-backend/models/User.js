@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
         isIn: [['organizer', 'attendee']],
       },
     },
+    profile_picture: {
+      type: DataTypes.STRING, // Stores the path to the profile picture
+      allowNull: true,       // Optional column
+    },
   }, {
     timestamps: false, // Disable timestamps
   });

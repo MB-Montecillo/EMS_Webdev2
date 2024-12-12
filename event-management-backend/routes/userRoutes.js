@@ -1,40 +1,51 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models'); // Import the User model
+const multer = require('multer');
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
-const db = require('../config/db');
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+
+// Configure Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/profile_pictures/'); // Directory to save uploaded files
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`); // Use timestamp + original name for uniqueness
+  },
+});
+const upload = multer({ storage });
 
 // Middleware to authenticate the user using JWT token
 const authenticateJWT = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+  const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  jwt.verify(token, 'your-secret-key', (err, decoded) => {  // Replace 'your-secret-key' with your actual secret key
+  jwt.verify(token, 'your-secret-key', (err, decoded) => {
     if (err) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    req.userId = decoded.userId; // Set the userId from the token
-    next(); // Continue to the next middleware or route handler
+    req.userId = decoded.userId;
+    next();
   });
 };
 
 // CREATE: Add a new user
 router.post('/register', async (req, res) => {
-  try{
-  const { name, email, password, role } = req.body;
+  try {
+    const { name, email, password, role } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Hash the password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const newUser = await User.create({ name, email,  password: hashedPassword, role });
-  res.status(201).json(newUser);
-} catch (error) {
-  res.status(500).json({ message: error.message });
-}
+    const newUser = await User.create({ name, email, password: hashedPassword, role });
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // LOGIN: Authenticate a user
@@ -54,16 +65,14 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Generate a JWT token
-    const token = jwt.sign({ userId: user.user_id}, 'your-secret-key', { expiresIn: '1h' }); // Replace 'your-secret-key' with your actual secret key
+    const token = jwt.sign({ userId: user.user_id }, 'your-secret-key', { expiresIn: '1h' });
 
     return res.status(200).json({
       message: 'User authenticated successfully',
-      token: token,  // Include the token in the response
-      userId: user.user_id
+      token,
+      userId: user.user_id,
     });
   } catch (error) {
-    console.error('Error during login:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -71,15 +80,14 @@ router.post('/login', async (req, res) => {
 // GET: Get the logged-in user's information
 router.get('/me', authenticateJWT, async (req, res) => {
   try {
-    const user = await User.findByPk(req.userId); // Get user based on the userId from the token
+    const user = await User.findByPk(req.userId);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    return res.status(200).json(user); // Send the user info back in the response
+    return res.status(200).json(user);
   } catch (error) {
-    console.error('Error fetching user:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -90,7 +98,6 @@ router.get('/', async (req, res) => {
     const users = await User.findAll();
     return res.status(200).json(users);
   } catch (error) {
-    console.error('Error fetching users:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -106,13 +113,12 @@ router.get('/:id', async (req, res) => {
 
     return res.status(200).json(user);
   } catch (error) {
-    console.error('Error fetching user:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// UPDATE: Update a user by ID
-router.put('/:id', async (req, res) => {
+// UPDATE: Update a user by ID (including profile picture)
+router.put('/:id', upload.single('profile_picture'), async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
@@ -122,20 +128,18 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Hash the password if it's being updated
     const hashedPassword = password ? await bcrypt.hash(password, 10) : user.password;
 
-    // Update the user
     await user.update({
       name: name || user.name,
       email: email || user.email,
       password: hashedPassword,
       role: role || user.role,
+      profile_picture: req.file ? req.file.path : user.profile_picture, // Update profile picture if uploaded
     });
 
     return res.status(200).json(user);
   } catch (error) {
-    console.error('Error updating user:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -149,11 +153,61 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Delete the user
     await user.destroy();
     return res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// UPLOAD: Upload or update profile picture for a user
+router.post('/:id/upload-profile', upload.single('profile_picture'), async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await user.update({
+      profile_picture: req.file.path,
+    });
+
+    return res.status(200).json({ message: 'Profile picture updated successfully', user });
+  } catch (error) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete Profile Picture
+router.delete('/:id/profile-picture', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get the path to the current profile picture
+    const profilePicturePath = user.profile_picture;
+
+    // Check if the file exists and remove it
+    if (profilePicturePath) {
+      const filePath = path.join(__dirname, '..', profilePicturePath);
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Failed to delete file' });
+        }
+      });
+    }
+
+    // Update the user's profile picture to null
+    await user.update({
+      profile_picture: null, // Or use an empty string if preferred
+    });
+
+    return res.status(200).json({ message: 'Profile picture deleted successfully' });
+  } catch (error) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

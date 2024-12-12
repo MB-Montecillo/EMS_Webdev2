@@ -1,39 +1,106 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
-import BookingForm from './BookingForm';
 
 function BookingsList() {
   const [bookings, setBookings] = useState([]);
-  const [showModal, setShowModal] = useState(false); // State to control modal visibility
-  const [selectedEventId, setSelectedEventId] = useState(null); // State for selected event ID (if needed)
+  const [events, setEvents] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState('myBookings'); // Tab state (myBookings, bookedEvents)
+
+  // Get the logged-in user's ID from localStorage
+  const userId = localStorage.getItem('userId');
+  console.log("Logged-in User ID:", userId); // Debugging line
 
   useEffect(() => {
     async function fetchBookings() {
       try {
         const { data } = await API.get('/bookings');
+        console.log('Fetched Bookings:', data); // Debugging line
         setBookings(data);
       } catch (error) {
         console.error('Error fetching bookings:', error);
       }
     }
+
+    async function fetchEvents() {
+      try {
+        const { data } = await API.get('/events');
+        setEvents(data);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    }
+
+    async function fetchUsers() {
+      try {
+        const { data } = await API.get('/users');
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    }
+
     fetchBookings();
+    fetchEvents();
+    fetchUsers();
   }, []);
 
-  const toggleModal = () => setShowModal(!showModal); // Toggle modal visibility
+  const handleDeleteBooking = async (bookingId) => {
+    try {
+      await API.delete(`/bookings/${bookingId}`);
+      setBookings(bookings.filter((booking) => booking.booking_id !== bookingId));
+      console.log('Booking deleted successfully');
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+    }
+  };
+
+  const getEventNameById = (eventId) => {
+    const event = events.find((event) => event.event_id === eventId);
+    return event ? event.event_name : 'Event not found';
+  };
+
+  const getUserNameById = (userId) => {
+    const user = users.find((user) => user.user_id === userId);
+    return user ? user.name : 'User not found';
+  };
 
   return (
     <div style={styles.container}>
       <h2>Your Bookings</h2>
+      <div style={styles.tabs}>
+        <button onClick={() => setActiveTab('myBookings')} style={styles.tabButton}>My Bookings</button>
+        <button onClick={() => setActiveTab('bookedEvents')} style={styles.tabButton}>Booked Events</button>
+      </div>
 
-      <ul style={styles.list}>
-        {bookings.map((booking) => (
-          <li key={booking.booking_id} style={styles.listItem}>
-            <h3>Event ID: {booking.event_id}</h3>
-            <p>Booking Date: {new Date(booking.booking_date).toLocaleDateString()}</p>
-            <p>Booked By: {booking.user_id}</p>
-          </li>
-        ))}
-      </ul>
+      {activeTab === 'myBookings' && (
+        <ul style={styles.list}>
+          {/* Correcting the filter condition here */}
+          {bookings.filter(booking => booking.user_id === userId).map((booking) => (
+            <li key={booking.booking_id} style={styles.listItem}>
+              <h3>Event: {getEventNameById(booking.event_id)}</h3>
+              <p>Booking Date: {new Date(booking.booking_date).toLocaleDateString()}</p>
+              <p>Booked By: {getUserNameById(booking.user_id)}</p>
+              <button onClick={() => handleDeleteBooking(booking.booking_id)} style={styles.button}>
+                Cancel Booking
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {activeTab === 'bookedEvents' && (
+        <ul style={styles.list}>
+          {/* Correcting the filter condition here */}
+          {bookings.filter(booking => booking.user_id !== userId).map((booking) => (
+            <li key={booking.booking_id} style={styles.listItem}>
+              <h3>Event: {getEventNameById(booking.event_id)}</h3>
+              <p>Booking Date: {new Date(booking.booking_date).toLocaleDateString()}</p>
+              <p>Booked By: {getUserNameById(booking.user_id)}</p>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -42,15 +109,18 @@ const styles = {
   container: {
     padding: '2rem',
   },
-  button: {
-    padding: '0.75rem 1.5rem',
-    fontSize: '1rem',
+  tabs: {
+    display: 'flex',
+    marginBottom: '1rem',
+  },
+  tabButton: {
+    padding: '1rem',
+    margin: '0 0.5rem',
+    cursor: 'pointer',
     backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
     borderRadius: '5px',
-    cursor: 'pointer',
-    marginBottom: '1rem',
   },
   list: {
     listStyleType: 'none',
@@ -62,32 +132,13 @@ const styles = {
     marginBottom: '1rem',
     borderRadius: '8px',
   },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modal: {
-    backgroundColor: 'white',
-    padding: '2rem',
-    borderRadius: '8px',
-    maxWidth: '500px',
-    width: '100%',
-    position: 'relative',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: '1rem',
-    right: '1rem',
-    background: 'none',
+  button: {
+    padding: '0.75rem 1.5rem',
+    fontSize: '1rem',
+    backgroundColor: '#ff4d4d',
+    color: 'white',
     border: 'none',
-    fontSize: '1.5rem',
+    borderRadius: '5px',
     cursor: 'pointer',
   },
 };

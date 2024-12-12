@@ -1,4 +1,3 @@
-// src/components/EventList.jsx
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
 import { Link } from 'react-router-dom';
@@ -18,9 +17,22 @@ function EventList() {
     fetchEvents();
   }, []);
 
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      await API.delete(`/events/${eventId}`);
+      setEvents(events.filter(event => event.event_id !== eventId)); // Remove the deleted event from the list
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    }
+  };
+
   return (
     <div style={styles.container}>
-      <h2>CUrrent Events</h2>
+      <h2>Current Events</h2>
+      <button style={styles.addButton}>
+        <Link to="/events/new" style={{ ...styles.link, color: 'white' }}>Add New Event</Link>
+      </button>
+
       <ul style={styles.list}>
         {events.map((event) => (
           <li key={event.event_id} style={styles.listItem}>
@@ -30,6 +42,12 @@ function EventList() {
             <p>Location: {event.location}</p>
             <p>Available Slots: {event.available_slots}</p>
             <Link to={`/events/${event.event_id}`} style={styles.link}>View Details</Link>
+            <button 
+              onClick={() => handleDeleteEvent(event.event_id)} 
+              style={styles.deleteButton}
+            >
+              Delete Event
+            </button>
           </li>
         ))}
       </ul>
@@ -54,6 +72,23 @@ const styles = {
   link: {
     textDecoration: 'none',
     color: '#007bff',
+  },
+  addButton: {
+    marginBottom: '1rem',
+    padding: '0.5rem 1rem',
+    backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+  },
+  deleteButton: {
+    marginLeft: '10px',
+    padding: '0.5rem 1rem',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
   },
 };
 
