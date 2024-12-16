@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../services/api';
+import EventForm from './EventForm';
 import { Link } from 'react-router-dom';
 
 function EventList() {
@@ -8,8 +9,8 @@ function EventList() {
   const [userRole, setUserRole] = useState(null);
   const userId = localStorage.getItem('userId');
   const [searchQuery, setSearchQuery] = useState('');
-
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false); 
   const eventsPerPage = 10;
 
   useEffect(() => {
@@ -57,10 +58,14 @@ function EventList() {
     }
   };
 
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   const filteredEvents = events.filter(event => {
     const location = locations.find(loc => loc.location_id === event.location_id);
     const locationName = location ? location.location_name.toLowerCase() : '';
-    
+
     return (
       event.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,10 +74,6 @@ function EventList() {
       new Date(event.end_date).toLocaleDateString().includes(searchQuery)
     );
   });
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
 
   const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
   const pageNumbers = [];
@@ -93,9 +94,26 @@ function EventList() {
       />
 
       {userRole === 'organizer' && (
-        <button style={styles.addButton}>
-          <Link to="/events/new" style={{ ...styles.link, color: 'white' }}>Add New Event</Link>
+        <button
+          style={styles.addButton}
+          onClick={() => setIsModalOpen(true)} 
+        >
+          Add New Event
         </button>
+      )}
+
+      {isModalOpen && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
+            <button
+              style={styles.closeButton}
+              onClick={() => setIsModalOpen(false)}
+            >
+              &times;
+            </button>
+            <EventForm onClose={() => setIsModalOpen(false)} /> 
+          </div>
+        </div>
       )}
 
       <ul style={styles.list}>
@@ -104,7 +122,7 @@ function EventList() {
           .map((event) => {
             const location = locations.find(loc => loc.location_id === event.location_id);
             const isFullyBooked = event.available_slots <= 0;
-            
+
             return (
               <li key={event.event_id} style={styles.listItem}>
                 <h3>{event.event_name}</h3>
@@ -198,6 +216,34 @@ const styles = {
     color: 'white',
     border: 'none',
     borderRadius: '5px',
+    cursor: 'pointer',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '8px',
+    width: '80%',
+    maxWidth: '600px',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    fontSize: '1.5rem',
     cursor: 'pointer',
   },
   searchInput: {

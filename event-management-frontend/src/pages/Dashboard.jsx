@@ -30,8 +30,17 @@ function Dashboard() {
 
         const totalEvents = eventsData.data.length; 
         const upcomingEvents = eventsData.data.filter(event => new Date(event.start_date) >= new Date()).slice(0, 5);
-        const totalBookings = bookingsData.data.length; 
-        const upcomingBookings = bookingsData.data.filter(booking => new Date(booking.booking_date) >= new Date()).slice(0, 5); 
+        const totalBookings = bookingsData.data.length;
+
+        console.log('Bookings Data:', bookingsData.data);
+
+        const upcomingBookings = bookingsData.data.filter(booking => {
+          const isUpcoming = new Date(booking.booking_date) >= new Date(); 
+          const isUserBooking = booking.user_id === parseInt(userId);  
+          console.log(`Booking ID: ${booking.booking_id}, Is Upcoming: ${isUpcoming}, Is User Booking: ${isUserBooking}`);
+          return isUpcoming && isUserBooking;
+        }).slice(0, 5)        
+
         const eventSpotlight = eventsData.data.reduce((prev, current) => (prev.available_slots < current.available_slots ? prev : current), eventsData.data[0]);
 
         setOverview({
