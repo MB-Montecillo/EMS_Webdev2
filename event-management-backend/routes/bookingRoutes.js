@@ -1,13 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { Booking, Event } = require('../models'); // Import the Booking and Event models
+const { Booking, Event } = require('../models'); 
 
-// CREATE: Add a new booking
 router.post('/', async (req, res) => {
   try {
     const { event_id, user_id, booking_date, slots_reserved } = req.body;
 
-    // Validation checks
     if (!event_id || !user_id || !slots_reserved || !booking_date) {
       return res.status(400).json({ error: 'All fields are required' });
     }
@@ -17,12 +15,10 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    // Check available slots before booking
     if (event.available_slots < slots_reserved) {
       return res.status(400).json({ error: 'Not enough available slots' });
     }
 
-    // Create the booking
     const newBooking = await Booking.create({
       event_id,
       user_id,
@@ -30,7 +26,6 @@ router.post('/', async (req, res) => {
       slots_reserved,
     });
 
-    // Update available slots in the Event table
     await event.update({
       available_slots: event.available_slots - slots_reserved,
     });
@@ -42,7 +37,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// READ: Get all bookings
 router.get('/', async (req, res) => {
   try {
     const bookings = await Booking.findAll();
@@ -53,7 +47,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// READ: Get a single booking by ID
 router.get('/:id', async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
@@ -69,7 +62,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// UPDATE: Update a booking by ID
 router.put('/:id', async (req, res) => {
   try {
     const { user_id, event_id, booking_date, slots_reserved } = req.body;
@@ -80,30 +72,25 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    // Find the event to check available slots
     const event = await Event.findByPk(event_id);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    // If the slots reserved have changed, update the event's available slots
     const previousSlotsReserved = booking.slots_reserved;
 
     if (previousSlotsReserved !== slots_reserved) {
       const slotDifference = slots_reserved - previousSlotsReserved;
 
-      // Check if there are enough available slots for the updated booking
       if (event.available_slots < slotDifference) {
         return res.status(400).json({ error: 'Not enough available slots for this booking' });
       }
 
-      // Update the event's available slots
       await event.update({
         available_slots: event.available_slots - slotDifference
       });
     }
 
-    // Update the booking
     await booking.update({ user_id, event_id, booking_date, slots_reserved });
 
     return res.status(200).json(booking);
@@ -113,7 +100,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE: Delete a booking by ID
 router.delete('/:id', async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
@@ -122,15 +108,12 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    // Find the associated event to update the available slots
     const event = await Event.findByPk(booking.event_id);
 
-    // Update the event's available slots
     await event.update({
       available_slots: event.available_slots + booking.slots_reserved
     });
 
-    // Delete the booking
     await booking.destroy();
     return res.status(200).json({ message: 'Booking deleted successfully' });
   } catch (error) {

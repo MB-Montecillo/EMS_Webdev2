@@ -8,8 +8,8 @@ module.exports = (sequelize, DataTypes) => {
     organizer_id: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'Users', // Ensure this matches the User model's table name
-        key: 'user_id', // Ensure this matches the key in the User model
+        model: 'Users', 
+        key: 'user_id', 
       },
       allowNull: false,
     },
@@ -40,21 +40,19 @@ module.exports = (sequelize, DataTypes) => {
     location_id: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'Locations', // Reference the Locations table
-        key: 'location_id', // Ensure this matches the primary key in the Locations table
+        model: 'Locations',
+        key: 'location_id', 
       },
       allowNull: true,
     },
   }, {
-    timestamps: false, // Disable timestamps
+    timestamps: false, 
   });
 
-  // Define the association between Event and Location (optional, if you need it in the model)
   Event.associate = (models) => {
-    // Define a many-to-one relationship between Event and Location
     Event.belongsTo(models.Location, {
       foreignKey: 'location_id',
-      as: 'location', // You can access location details as 'location' in an event
+      as: 'location', 
     });
   };
 

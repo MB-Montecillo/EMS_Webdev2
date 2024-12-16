@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { Location } = require('../models'); // Import the Location model
+const { Location } = require('../models');
 const db = require('../config/db');
 
-// CREATE: Add a new location
 router.post('/', async (req, res) => {
   const { location_name, address, capacity } = req.body;
 
@@ -19,7 +18,6 @@ router.post('/', async (req, res) => {
   });
 });
 
-// READ: Get all locations
 router.get('/', async (req, res) => {
   try {
     const locations = await Location.findAll();
@@ -30,7 +28,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// READ: Get a single location by ID
 router.get('/:id', async (req, res) => {
   try {
     const location = await Location.findByPk(req.params.id);
@@ -46,7 +43,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// UPDATE: Update a location by ID
 router.put('/:id', async (req, res) => {
   try {
     const { location_name, address, capacity } = req.body;
@@ -57,7 +53,6 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Location not found' });
     }
 
-    // Update the location
     await location.update({
       location_name: location_name || location.location_name,
       address: address || location.address,
@@ -71,7 +66,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE: Delete a location by ID
 router.delete('/:id', async (req, res) => {
   try {
     const location = await Location.findByPk(req.params.id);
@@ -80,7 +74,6 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Location not found' });
     }
 
-    // Delete the location
     await location.destroy();
     return res.status(200).json({ message: 'Location deleted successfully' });
   } catch (error) {

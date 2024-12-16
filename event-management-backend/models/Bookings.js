@@ -8,16 +8,16 @@ module.exports = (sequelize, DataTypes) => {
     user_id: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'Users', // Ensure this matches the Users model
-        key: 'user_id', // Ensure this matches the key in the Users model
+        model: 'Users',
+        key: 'user_id', 
       },
       allowNull: false,
     },
     event_id: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'Events', // Ensure this matches the Events model
-        key: 'event_id', // Ensure this matches the key in the Events model
+        model: 'Events',
+        key: 'event_id', 
       },
       allowNull: false,
     },
@@ -26,12 +26,12 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.NOW,
     },
     slots_reserved: {
-      type: DataTypes.INTEGER,  // Field to track the number of reserved slots
+      type: DataTypes.INTEGER, 
       allowNull: false,
-      defaultValue: 1,  // Assuming each booking reserves one slot
+      defaultValue: 1,  
     },
   }, {
-    timestamps: false, // Disable timestamps
+    timestamps: false, 
   });
 
   return Booking;

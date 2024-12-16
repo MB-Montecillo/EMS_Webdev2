@@ -18,15 +18,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   }, {
-    timestamps: false, // Disable timestamps
+    timestamps: false, 
   });
 
-  // Optional: If you want to define reverse associations
   Location.associate = (models) => {
-    // A Location can have many Events
     Location.hasMany(models.Event, {
       foreignKey: 'location_id',
-      as: 'events', // You can access the events of a location as 'events'
+      as: 'events',
     });
   };
 

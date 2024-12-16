@@ -48,7 +48,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// LOGIN: Authenticate a user
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -65,28 +64,26 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Include the user role in the JWT
     const token = jwt.sign(
       {
-        userId: user.user_id,  // The user's ID
-        role: user.role,        // Add the user's role
+        userId: user.user_id, 
+        role: user.role,      
       },
-      'your-secret-key',        // Use your actual secret key or environment variable
-      { expiresIn: '1h' }      // Set token expiration
+      'your-secret-key',      
+      { expiresIn: '1h' }      
     );
 
     return res.status(200).json({
       message: 'User authenticated successfully',
       token,
       userId: user.user_id,
-      role: user.role,         // Optionally you can also return the role in the response
+      role: user.role,         
     });
   } catch (error) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// GET: Get the logged-in user's information
 router.get('/me', authenticateJWT, async (req, res) => {
   try {
     const user = await User.findByPk(req.userId);
@@ -101,7 +98,6 @@ router.get('/me', authenticateJWT, async (req, res) => {
   }
 });
 
-// READ: Get all users
 router.get('/', async (req, res) => {
   try {
     const users = await User.findAll();
@@ -111,7 +107,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// READ: Get a single user by ID
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -126,7 +121,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// UPDATE: Update a user by ID (including profile picture)
 router.put('/:id', upload.single('profile_picture'), async (req, res) => {
   const { name, email, password, role } = req.body;
 
@@ -144,7 +138,7 @@ router.put('/:id', upload.single('profile_picture'), async (req, res) => {
       email: email || user.email,
       password: hashedPassword,
       role: role || user.role,
-      profile_picture: req.file ? req.file.path : user.profile_picture, // Update profile picture if uploaded
+      profile_picture: req.file ? req.file.path : user.profile_picture, 
     });
 
     return res.status(200).json(user);
@@ -153,7 +147,6 @@ router.put('/:id', upload.single('profile_picture'), async (req, res) => {
   }
 });
 
-// DELETE: Delete a user by ID
 router.delete('/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -169,7 +162,6 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// UPLOAD: Upload or update profile picture for a user
 router.post('/:id/upload-profile', upload.single('profile_picture'), async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -188,7 +180,6 @@ router.post('/:id/upload-profile', upload.single('profile_picture'), async (req,
   }
 });
 
-// Delete Profile Picture
 router.delete('/:id/profile-picture', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -197,10 +188,8 @@ router.delete('/:id/profile-picture', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get the path to the current profile picture
     const profilePicturePath = user.profile_picture;
 
-    // Check if the file exists and remove it
     if (profilePicturePath) {
       const filePath = path.join(__dirname, '..', profilePicturePath);
       fs.unlink(filePath, (err) => {
@@ -210,9 +199,8 @@ router.delete('/:id/profile-picture', async (req, res) => {
       });
     }
 
-    // Update the user's profile picture to null
     await user.update({
-      profile_picture: null, // Or use an empty string if preferred
+      profile_picture: null, 
     });
 
     return res.status(200).json({ message: 'Profile picture deleted successfully' });

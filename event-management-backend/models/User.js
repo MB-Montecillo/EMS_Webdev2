@@ -26,10 +26,10 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     profile_picture: {
-      type: DataTypes.STRING, // Stores the path to the profile picture
-      allowNull: true,       // Optional column
+      type: DataTypes.STRING, 
+      allowNull: true,      
     },
   }, {
-    timestamps: false, // Disable timestamps
+    timestamps: false, 
   });
 };
