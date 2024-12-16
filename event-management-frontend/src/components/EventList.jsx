@@ -9,7 +9,6 @@ function EventList() {
   const userId = localStorage.getItem('userId');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 10;
 
@@ -71,12 +70,10 @@ function EventList() {
     );
   });
 
-  // Handle page change
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // Generate pagination numbers (for pages 1, 2, 3, etc.)
   const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
@@ -87,7 +84,6 @@ function EventList() {
     <div style={styles.container}>
       <h2>Events</h2>
 
-      {/* Search Input */}
       <input
         type="text"
         placeholder="Search events..."

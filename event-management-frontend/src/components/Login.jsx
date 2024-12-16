@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false); // Loading state
+  const [loading, setLoading] = useState(false); 
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -16,25 +16,23 @@ function Login() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault(); 
 
-    // Basic validation
     if (!formData.email || !formData.password) {
       alert('Please fill in both fields');
       return;
     }
 
-    setLoading(true); // Set loading to true
+    setLoading(true); 
     try {
       const response = await axios.post('http://localhost:5000/api/users/login', formData);
       const { data } = response;
 
-      console.log('Login successful:', data); // Debugging purpose
+      console.log('Login successful:', data); 
 
       if (data.token) {
-        localStorage.setItem('authToken', data.token); // Store token in localStorage
+        localStorage.setItem('authToken', data.token); 
         localStorage.setItem('userId', data.userId); 
-        //navigate('/dashboard'); // Redirect to dashboard
         window.location.href = '/dashboard';
       } else {
         alert('Login failed: No token received');
@@ -42,9 +40,9 @@ function Login() {
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
       console.error('Login error:', errorMessage);
-      alert(errorMessage); // Display error message
+      alert(errorMessage); 
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false); 
     }
   };
 

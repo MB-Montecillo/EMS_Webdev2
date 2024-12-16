@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import API from '../services/api'; // Make sure this service is set up correctly
+import API from '../services/api'; 
 
 function EventForm() {
   const [locations, setLocations] = useState([]);
-  const [existingEvents, setExistingEvents] = useState([]); // State to hold existing events
+  const [existingEvents, setExistingEvents] = useState([]); 
   const userId = localStorage.getItem('userId');
   
   const [formData, setFormData] = useState({
@@ -13,18 +13,18 @@ function EventForm() {
     description: '',
     start_date: '',
     end_date: '',
-    location_id: '', // Store selected location ID
+    location_id: '', 
     available_slots: ''
   });
 
-  const [selectedLocationCapacity, setSelectedLocationCapacity] = useState(0); // State for location capacity
+  const [selectedLocationCapacity, setSelectedLocationCapacity] = useState(0); 
 
   useEffect(() => {
     async function fetchLocations() {
       try {
         const { data } = await API.get('/locations');
         console.log('Fetch Locations Data:', data);
-        setLocations(data); // Set the locations fetched from the database
+        setLocations(data);
       } catch (error) {
         console.error('Error fetching locations:', error);
       }
@@ -40,12 +40,11 @@ function EventForm() {
         [name]: value,
       };
 
-      // Check if the start date was changed and update end date accordingly
       if (name === 'start_date' && updatedData.start_date && updatedData.end_date) {
         const startDate = new Date(updatedData.start_date);
         const endDate = new Date(updatedData.end_date);
         if (startDate > endDate) {
-          updatedData.end_date = updatedData.start_date; // Set end date to start date if it's before
+          updatedData.end_date = updatedData.start_date; 
         }
       }
 
@@ -55,17 +54,16 @@ function EventForm() {
     if (name === 'location_id') {
       const selectedLocation = locations.find(loc => loc.location_id.toString() === value);
       console.log('Selected Location:', selectedLocation);
-      setSelectedLocationCapacity(selectedLocation ? selectedLocation.capacity : 0); // Update capacity state
+      setSelectedLocationCapacity(selectedLocation ? selectedLocation.capacity : 0); 
 
-      // Fetch existing events for the selected location
       fetchExistingEvents(value);
     }
   };
 
   const fetchExistingEvents = async (locationId) => {
     try {
-      const { data } = await API.get(`/events?location_id=${locationId}`); // Adjust the API endpoint as needed
-      setExistingEvents(data); // Set existing events for conflict checking
+      const { data } = await API.get(`/events?location_id=${locationId}`); 
+      setExistingEvents(data); 
       console.log('Existing Events:', data);
     } catch (error) {
       console.error('Error fetching existing events:', error);
@@ -75,26 +73,23 @@ function EventForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check if available slots exceed capacity
     if (parseInt(formData.available_slots) > selectedLocationCapacity) {
       alert(`Available slots exceed the capacity of the selected location (${selectedLocationCapacity}).`);
-      return; // Prevent form submission
+      return; 
     }
 
-    // Check for duration validation (must be at least 1 hour)
     const durationInHours = parseInt(formData.duration);
     if (durationInHours < 1) {
       alert('Duration must be at least 1 hour.');
-      return; // Prevent form submission
+      return; 
     }
 
-    // Check for date conflicts with existing events
     const startDate = new Date(formData.start_date);
     const endDate = new Date(formData.end_date);
 
     if (startDate > endDate) {
       alert('End date cannot be before the start date.');
-      return; // Prevent form submission
+      return; 
     }
 
     const hasConflict = existingEvents.some(event => {
@@ -102,17 +97,16 @@ function EventForm() {
       const eventEndDate = new Date(event.end_date);
       return (
         event.location_id === formData.location_id &&
-        startDate < eventEndDate && // Check if new event ends after existing event starts
-        endDate > eventStartDate // Check if new event starts before existing event ends
+        startDate < eventEndDate && 
+        endDate > eventStartDate 
       );
     });
 
     if (hasConflict) {
       alert('The venue has already been booked for the selected dates.');
-      return; // Prevent form submission
+      return; 
     }
 
-    // Ensure data is in the correct format
     const formattedStartDate = startDate.toISOString();
     const formattedEndDate = endDate.toISOString();
 
@@ -122,7 +116,6 @@ function EventForm() {
       end_date: formattedEndDate,
     };
 
-    // Log the data to check
     console.log('Event Data being sent:', eventData);
 
     try {

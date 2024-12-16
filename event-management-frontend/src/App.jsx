@@ -9,14 +9,13 @@ import Dashboard from './pages/Dashboard';
 import EventList from './components/EventList';
 import EventDetails from './components/EventDetails';
 import EventForm from './components/EventForm';  
-import EditEvent from './components/EditEvent'; // Import the new EditEvent component
+import EditEvent from './components/EditEvent'; 
 import BookingsList from './components/BookingsList'; 
 import LocationList from './components/LocationList'; 
 import Profile from './components/Profile';
 import NotFound from './pages/NotFound';
 import { isAuthenticated, getCurrentUser } from './services/auth';
 
-// PrivateRoute component for role-based access
 const PrivateRoute = ({ element, role }) => {
   const user = getCurrentUser();
   const userRole = user ? user.role : null;

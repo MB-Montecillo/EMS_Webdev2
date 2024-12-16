@@ -11,7 +11,7 @@ function Profile() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const { data } = await API.get(`/users/${user.userId}`); // Fetch profile by user ID
+        const { data } = await API.get(`/users/${user.userId}`); 
         setProfile(data);
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -43,7 +43,6 @@ function Profile() {
         role: e.target.role.value,
       };
       
-      // Include profile picture if changed
       if (newProfilePic) {
         await API.post(`/users/${user.userId}/upload-profile`, formData);
       }
@@ -69,7 +68,7 @@ function Profile() {
         <img
           src={profile.profile_picture.startsWith('http') 
             ? profile.profile_picture 
-            : `${import.meta.env.VITE_API_URL}/${profile.profile_picture}`}  // Use import.meta.env for Vite
+            : `${import.meta.env.VITE_API_URL}/${profile.profile_picture}`}  
           alt="Profile"
           style={{ width: '100px', height: '100px', borderRadius: '50%' }}
         />

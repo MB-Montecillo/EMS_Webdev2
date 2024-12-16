@@ -3,8 +3,8 @@ import API from '../services/api';
 import { useParams, useNavigate } from 'react-router-dom';
 
 function EditEvent() {
-  const { id } = useParams(); // Get the event ID from the URL
-  const navigate = useNavigate(); // For navigation after updating the event
+  const { id } = useParams(); 
+  const navigate = useNavigate(); 
   const [locations, setLocations] = useState([]);
   const [formData, setFormData] = useState({
     event_name: '',
@@ -16,9 +16,8 @@ function EditEvent() {
     duration: '',
     organizer_id: localStorage.getItem('userId'),
   });
-  const [selectedLocationCapacity, setSelectedLocationCapacity] = useState(0); // State for location capacity
+  const [selectedLocationCapacity, setSelectedLocationCapacity] = useState(0); 
 
-  // Fetch locations first
   useEffect(() => {
     async function fetchLocations() {
       try {
@@ -29,13 +28,12 @@ function EditEvent() {
       }
     }
 
-    fetchLocations(); // Fetch locations when the component is mounted
+    fetchLocations(); 
   }, []);
 
-  // Fetch event details and update form data
   useEffect(() => {
     async function fetchEvent() {
-      if (locations.length > 0) { // Only fetch event if locations are loaded
+      if (locations.length > 0) { 
         try {
           const { data } = await API.get(`/events/${id}`);
           setFormData({
@@ -57,10 +55,9 @@ function EditEvent() {
       }
     }
 
-    fetchEvent(); // Fetch event details if editing
-  }, [locations, id]); // Trigger this effect whenever locations or event ID changes
+    fetchEvent(); 
+  }, [locations, id]); 
 
-  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
@@ -68,26 +65,24 @@ function EditEvent() {
       [name]: value,
     }));
 
-    // Update location capacity when location is changed
     if (name === 'location_id') {
       const selectedLocation = locations.find(loc => loc.location_id.toString() === value);
       setSelectedLocationCapacity(selectedLocation ? selectedLocation.capacity : 0);
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (parseInt(formData.available_slots) > selectedLocationCapacity) {
       alert(`Available slots exceed the capacity of the selected location (${selectedLocationCapacity}).`);
-      return; // Prevent form submission
+      return; 
     }
 
     const durationInHours = parseInt(formData.duration);
     if (durationInHours < 1) {
       alert('Duration must be at least 1 hour.');
-      return; // Prevent form submission
+      return; 
     }
 
     const formattedStartDate = new Date(formData.start_date).toISOString();
@@ -100,10 +95,9 @@ function EditEvent() {
     };
 
     try {
-      // Update the existing event
       await API.put(`/events/${id}`, eventData);
       alert('Event updated successfully!');
-      navigate(`/events`); // Redirect to the event details page after update
+      navigate(`/events`); 
     } catch (error) {
       console.error('Error updating event:', error);
     }

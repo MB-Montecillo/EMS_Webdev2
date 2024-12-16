@@ -4,10 +4,9 @@ import API from '../services/api';
 function LocationList() {
   const [locations, setLocations] = useState([]);
   const [formData, setFormData] = useState({ location_name: '', address: '', capacity: '' });
-  const [editMode, setEditMode] = useState(false); // Track if we are in edit mode
-  const [editLocationId, setEditLocationId] = useState(null); // Track which location is being edited
+  const [editMode, setEditMode] = useState(false); 
+  const [editLocationId, setEditLocationId] = useState(null); 
 
-  // Fetch locations from the backend
   useEffect(() => {
     async function fetchLocations() {
       try {
@@ -20,17 +19,14 @@ function LocationList() {
     fetchLocations();
   }, []);
 
-  // Handle input change for the form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Create or update a location based on the mode (Add/Edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (editMode) {
-      // Update location
       try {
         await API.put(`/locations/${editLocationId}`, formData);
         setLocations(locations.map(location =>
@@ -45,7 +41,6 @@ function LocationList() {
         console.error('Error updating location:', error);
       }
     } else {
-      // Create new location
       try {
         const { data } = await API.post('/locations', formData);
         setLocations([...locations, { ...formData, location_id: data.locationId }]);
@@ -56,7 +51,6 @@ function LocationList() {
     }
   };
 
-  // Edit an existing location
   const handleEditLocation = (location) => {
     setFormData({
       location_name: location.location_name,
@@ -67,7 +61,6 @@ function LocationList() {
     setEditLocationId(location.location_id);
   };
 
-  // Delete a location
   const handleDeleteLocation = async (locationId) => {
     try {
       await API.delete(`/locations/${locationId}`);
@@ -81,7 +74,6 @@ function LocationList() {
     <div style={styles.container}>
       <h2>Locations</h2>
 
-      {/* Add/Edit Location Form */}
       <form onSubmit={handleSubmit} style={styles.form}>
         <input
           type="text"
@@ -115,7 +107,6 @@ function LocationList() {
         </button>
       </form>
 
-      {/* Location List */}
       <ul style={styles.list}>
         {locations.map(location => (
           <li key={location.location_id} style={styles.listItem}>

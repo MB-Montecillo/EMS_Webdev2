@@ -5,15 +5,14 @@ function BookingsList() {
   const [bookings, setBookings] = useState([]);
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('myBookings'); // Tab state (myBookings, bookedEvents)
+  const [activeTab, setActiveTab] = useState('myBookings');
 
-  // Get the logged-in user's ID from localStorage
   const userId = localStorage.getItem('userId');
   useEffect(() => {
     async function fetchBookings() {
       try {
         const { data } = await API.get('/bookings');
-        console.log('Fetched Bookings:', data); // Debugging line
+        console.log('Fetched Bookings:', data);
         setBookings(data);
       } catch (error) {
         console.error('Error fetching bookings:', error);
@@ -72,7 +71,6 @@ function BookingsList() {
       </div>
       {activeTab === 'myBookings' && (
         <ul style={styles.list}>
-          {/* Correcting the filter condition here */}
           {bookings.filter(booking => String(booking.user_id) === String(userId)).map((booking) => (
             <li key={booking.booking_id} style={styles.listItem}>
               <h3>Event: {getEventNameById(booking.event_id)}</h3>
@@ -88,7 +86,6 @@ function BookingsList() {
 
       {activeTab === 'bookedEvents' && (
         <ul style={styles.list}>
-          {/* Correcting the filter condition here */}
           {bookings.filter(booking => booking.user_id !== userId).map((booking) => (
             <li key={booking.booking_id} style={styles.listItem}>
               <h3>Event: {getEventNameById(booking.event_id)}</h3>

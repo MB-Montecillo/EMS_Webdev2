@@ -6,8 +6,8 @@ import BookingForm from './BookingForm';
 function EventDetails() {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
-  const [location, setLocation] = useState(null); // State to hold the location details
-  const [organizer, setOrganizer] = useState(null); // State to hold the organizer details
+  const [location, setLocation] = useState(null); 
+  const [organizer, setOrganizer] = useState(null);
 
   useEffect(() => {
     async function fetchEvent() {
@@ -15,12 +15,10 @@ function EventDetails() {
         const { data } = await API.get(`/events/${id}`);
         setEvent(data);
 
-        // Fetch the location based on the location_id from the event
-        const locationResponse = await API.get(`/locations/${data.location_id}`); // Assuming the API endpoint exists
+        const locationResponse = await API.get(`/locations/${data.location_id}`); 
         setLocation(locationResponse.data);
         
-        // Fetch the organizer details using organizer_id
-        const organizerResponse = await API.get(`/users/${data.organizer_id}`); // Assuming this endpoint returns user details
+        const organizerResponse = await API.get(`/users/${data.organizer_id}`); 
         setOrganizer(organizerResponse.data);
       } catch (error) {
         console.error('Error fetching event details:', error);
@@ -29,7 +27,7 @@ function EventDetails() {
     fetchEvent();
   }, [id]);
 
-  if (!event || !location || !organizer) return <p>Loading...</p>; // Ensure both event, location, and organizer are loaded
+  if (!event || !location || !organizer) return <p>Loading...</p>; 
 
   return (
     <div style={styles.container}>
@@ -37,9 +35,8 @@ function EventDetails() {
       <p>{event.description}</p>
       <p>Date: {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}</p>
       <p>Location: {location.location_name} - {location.address}</p>
-      {/* <p>Available Slots: {event.available_slots}</p> */}
-      <p>Duration: {event.duration} hours</p> {/* Displaying event duration */}
-      <p>Organizer: {organizer.name}</p> {/* Displaying organizer name */}
+      <p>Duration: {event.duration} hours</p> 
+      <p>Organizer: {organizer.name}</p> 
       <BookingForm eventId={event.event_id} />
     </div>
   );

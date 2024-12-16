@@ -12,7 +12,7 @@ function Dashboard() {
     eventSpotlight: null,
   });
 
-  const [userRole, setUserRole] = useState(null); // State to hold user role
+  const [userRole, setUserRole] = useState(null); 
   const userId = localStorage.getItem('userId');
 
   useEffect(() => {
@@ -26,13 +26,12 @@ function Dashboard() {
         setBookings(bookingsData.data);
 
         const userRoleResponse = await API.get(`/users/${userId}`);
-        setUserRole(userRoleResponse.data.role); // Set user role
+        setUserRole(userRoleResponse.data.role);
 
-        // Calculate overview
-        const totalEvents = eventsData.data.length; // Total number of events
-        const upcomingEvents = eventsData.data.filter(event => new Date(event.start_date) >= new Date()).slice(0, 5); // Upcoming events
-        const totalBookings = bookingsData.data.length; // Total number of bookings (for all users)
-        const upcomingBookings = bookingsData.data.filter(booking => new Date(booking.booking_date) >= new Date()).slice(0, 5); // Upcoming bookings
+        const totalEvents = eventsData.data.length; 
+        const upcomingEvents = eventsData.data.filter(event => new Date(event.start_date) >= new Date()).slice(0, 5);
+        const totalBookings = bookingsData.data.length; 
+        const upcomingBookings = bookingsData.data.filter(booking => new Date(booking.booking_date) >= new Date()).slice(0, 5); 
         const eventSpotlight = eventsData.data.reduce((prev, current) => (prev.available_slots < current.available_slots ? prev : current), eventsData.data[0]);
 
         setOverview({
@@ -53,7 +52,6 @@ function Dashboard() {
     <div style={styles.container}>
       <h2>Dashboard</h2>
       <div style={styles.widgets}>
-        {/* Only show total events created for organizers */}
         {userRole === 'organizer' && (
           <div style={styles.widget}>
             <h3>Total Events Created</h3>
@@ -70,7 +68,6 @@ function Dashboard() {
           </ul>
         </div>
 
-        {/* Show total bookings only for organizers */}
         {userRole === 'organizer' && (
           <div style={styles.widget}>
             <h3>Total Bookings</h3>
@@ -82,7 +79,7 @@ function Dashboard() {
           <h3>Upcoming Bookings</h3>
           <ul>
             {overview.upcomingBookings.map(booking => {
-              const event = events.find(event => event.event_id === booking.event_id); // Find event by ID
+              const event = events.find(event => event.event_id === booking.event_id); 
               return (
                 <li key={booking.booking_id}>
                   {event ? event.event_name : 'Event Not Found'} on {new Date(booking.booking_date).toLocaleDateString()}

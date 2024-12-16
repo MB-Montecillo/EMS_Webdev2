@@ -3,20 +3,19 @@ import API from '../services/api';
 
 function BookingForm({ eventId }) {
   const [bookingDate, setBookingDate] = useState('');
-  const [slotsReserved, setSlotsReserved] = useState(1); // Default to 1 slot
-  const [availableSlots, setAvailableSlots] = useState(0); // To store available slots of the event
-  const [startDate, setStartDate] = useState(''); // Event start date
-  const [endDate, setEndDate] = useState(''); // Event end date
+  const [slotsReserved, setSlotsReserved] = useState(1); 
+  const [availableSlots, setAvailableSlots] = useState(0); 
+  const [startDate, setStartDate] = useState(''); 
+  const [endDate, setEndDate] = useState(''); 
   const [userId, setUserId] = useState(localStorage.getItem('userId') || '');
   
-  // Fetch event details to get available slots, start date, and end date
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
         const response = await API.get(`/events/${eventId}`);
-        setAvailableSlots(response.data.available_slots); // Assuming the event object has 'available_slots'
-        setStartDate(response.data.start_date); // Set the event's start date
-        setEndDate(response.data.end_date); // Set the event's end date
+        setAvailableSlots(response.data.available_slots); 
+        setStartDate(response.data.start_date); 
+        setEndDate(response.data.end_date); 
       } catch (error) {
         console.error('Error fetching event details:', error);
       }
@@ -29,13 +28,11 @@ function BookingForm({ eventId }) {
   const handleBooking = async (e) => {
     e.preventDefault();
 
-    // Validation for available slots
     if (slotsReserved > availableSlots) {
       alert('Not enough available slots!');
       return;
     }
 
-    // Validate booking date to be within the event's start and end date
     const bookingDateObj = new Date(bookingDate);
     const eventStartDate = new Date(startDate);
     const eventEndDate = new Date(endDate);
@@ -51,15 +48,13 @@ function BookingForm({ eventId }) {
     }
 
     try {
-      // Send user_id and event_id along with other booking details
       await API.post('/bookings', {
         event_id: eventId,
-        user_id: userId, // Include user_id to associate the booking with the logged-in user
+        user_id: userId, 
         booking_date: bookingDate,
         slots_reserved: slotsReserved,
       });
       alert('Booking successful!');
-      // Dynamically update available slots without reloading the page
       setAvailableSlots(availableSlots - slotsReserved);
     } catch (error) {
       alert(error.response?.data || 'Booking failed');

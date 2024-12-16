@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout, isAuthenticated, getCurrentUser } from '../services/auth';
@@ -6,9 +5,9 @@ import { logout, isAuthenticated, getCurrentUser } from '../services/auth';
 function Navbar() {
   const navigate = useNavigate();
   const user = getCurrentUser();
-  console.log(user); // Debugging: Check the user object
+  console.log(user);
   
-  const userRole = user ? user.role : null; // Extract the role from the user object
+  const userRole = user ? user.role : null; 
 
   const handleLogout = () => {
     logout();
@@ -24,7 +23,6 @@ function Navbar() {
             <Link to="/dashboard" style={styles.link}>Dashboard</Link>
             <Link to="/bookings" style={styles.link}>Bookings</Link>
             <Link to="/events" style={styles.link}>Events</Link>
-            {/* Conditionally render the Location List link */}
             {userRole === 'organizer' && (
               <Link to="/locations" style={styles.link}>Locations</Link>
             )}
