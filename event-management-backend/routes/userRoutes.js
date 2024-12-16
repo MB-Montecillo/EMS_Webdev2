@@ -7,18 +7,16 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 
-// Configure Multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/profile_pictures/'); // Directory to save uploaded files
+    cb(null, 'uploads/profile_pictures/'); 
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`); // Use timestamp + original name for uniqueness
+    cb(null, `${Date.now()}-${file.originalname}`); 
   },
 });
 const upload = multer({ storage });
 
-// Middleware to authenticate the user using JWT token
 const authenticateJWT = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -35,7 +33,6 @@ const authenticateJWT = (req, res, next) => {
   });
 };
 
-// CREATE: Add a new user
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
