@@ -9,8 +9,6 @@ function BookingsList() {
 
   // Get the logged-in user's ID from localStorage
   const userId = localStorage.getItem('userId');
-  console.log("Logged-in User ID:", userId); // Debugging line
-
   useEffect(() => {
     async function fetchBookings() {
       try {
@@ -67,16 +65,15 @@ function BookingsList() {
 
   return (
     <div style={styles.container}>
-      <h2>Your Bookings</h2>
+      <h2>Bookings</h2>
       <div style={styles.tabs}>
         <button onClick={() => setActiveTab('myBookings')} style={styles.tabButton}>My Bookings</button>
         <button onClick={() => setActiveTab('bookedEvents')} style={styles.tabButton}>Booked Events</button>
       </div>
-
       {activeTab === 'myBookings' && (
         <ul style={styles.list}>
           {/* Correcting the filter condition here */}
-          {bookings.filter(booking => booking.user_id === userId).map((booking) => (
+          {bookings.filter(booking => String(booking.user_id) === String(userId)).map((booking) => (
             <li key={booking.booking_id} style={styles.listItem}>
               <h3>Event: {getEventNameById(booking.event_id)}</h3>
               <p>Booking Date: {new Date(booking.booking_date).toLocaleDateString()}</p>

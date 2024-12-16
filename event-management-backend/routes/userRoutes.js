@@ -65,12 +65,21 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const token = jwt.sign({ userId: user.user_id }, 'your-secret-key', { expiresIn: '1h' });
+    // Include the user role in the JWT
+    const token = jwt.sign(
+      {
+        userId: user.user_id,  // The user's ID
+        role: user.role,        // Add the user's role
+      },
+      'your-secret-key',        // Use your actual secret key or environment variable
+      { expiresIn: '1h' }      // Set token expiration
+    );
 
     return res.status(200).json({
       message: 'User authenticated successfully',
       token,
       userId: user.user_id,
+      role: user.role,         // Optionally you can also return the role in the response
     });
   } catch (error) {
     return res.status(500).json({ error: 'Internal server error' });

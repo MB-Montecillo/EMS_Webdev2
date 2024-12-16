@@ -1,120 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import API from '../services/api'; // Make sure this service is set up correctly
+import API from '../services/api';
+import { useParams, useNavigate } from 'react-router-dom';
 
-function EventForm() {
+function EditEvent() {
+  const { id } = useParams(); // Get the event ID from the URL
+  const navigate = useNavigate(); // For navigation after updating the event
   const [locations, setLocations] = useState([]);
-  const [existingEvents, setExistingEvents] = useState([]); // State to hold existing events
-  const userId = localStorage.getItem('userId');
-  
   const [formData, setFormData] = useState({
-    organizer_id: userId,
-    duration: '',
     event_name: '',
     description: '',
     start_date: '',
     end_date: '',
-    location_id: '', // Store selected location ID
-    available_slots: ''
+    location_id: '',
+    available_slots: '',
+    duration: '',
+    organizer_id: localStorage.getItem('userId'),
   });
-
   const [selectedLocationCapacity, setSelectedLocationCapacity] = useState(0); // State for location capacity
 
+  // Fetch locations first
   useEffect(() => {
     async function fetchLocations() {
       try {
         const { data } = await API.get('/locations');
-        console.log('Fetch Locations Data:', data);
-        setLocations(data); // Set the locations fetched from the database
+        setLocations(data);
       } catch (error) {
         console.error('Error fetching locations:', error);
       }
     }
-    fetchLocations();
+
+    fetchLocations(); // Fetch locations when the component is mounted
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => {
-      const updatedData = {
-        ...prevState,
-        [name]: value,
-      };
-
-      // Check if the start date was changed and update end date accordingly
-      if (name === 'start_date' && updatedData.start_date && updatedData.end_date) {
-        const startDate = new Date(updatedData.start_date);
-        const endDate = new Date(updatedData.end_date);
-        if (startDate > endDate) {
-          updatedData.end_date = updatedData.start_date; // Set end date to start date if it's before
+  // Fetch event details and update form data
+  useEffect(() => {
+    async function fetchEvent() {
+      if (locations.length > 0) { // Only fetch event if locations are loaded
+        try {
+          const { data } = await API.get(`/events/${id}`);
+          setFormData({
+            event_name: data.event_name,
+            description: data.description,
+            start_date: data.start_date,
+            end_date: data.end_date,
+            location_id: data.location_id,
+            available_slots: data.available_slots,
+            duration: data.duration,
+            organizer_id: data.organizer_id,
+          });
+          
+          const location = locations.find(loc => loc.location_id === data.location_id);
+          setSelectedLocationCapacity(location ? location.capacity : 0);
+        } catch (error) {
+          console.error('Error fetching event for editing:', error);
         }
       }
+    }
 
-      return updatedData;
-    });
+    fetchEvent(); // Fetch event details if editing
+  }, [locations, id]); // Trigger this effect whenever locations or event ID changes
 
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+
+    // Update location capacity when location is changed
     if (name === 'location_id') {
       const selectedLocation = locations.find(loc => loc.location_id.toString() === value);
-      console.log('Selected Location:', selectedLocation);
-      setSelectedLocationCapacity(selectedLocation ? selectedLocation.capacity : 0); // Update capacity state
-
-      // Fetch existing events for the selected location
-      fetchExistingEvents(value);
+      setSelectedLocationCapacity(selectedLocation ? selectedLocation.capacity : 0);
     }
   };
 
-  const fetchExistingEvents = async (locationId) => {
-    try {
-      const { data } = await API.get(`/events?location_id=${locationId}`); // Adjust the API endpoint as needed
-      setExistingEvents(data); // Set existing events for conflict checking
-      console.log('Existing Events:', data);
-    } catch (error) {
-      console.error('Error fetching existing events:', error);
-    }
-  };
-
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check if available slots exceed capacity
+
     if (parseInt(formData.available_slots) > selectedLocationCapacity) {
       alert(`Available slots exceed the capacity of the selected location (${selectedLocationCapacity}).`);
       return; // Prevent form submission
     }
 
-    // Check for duration validation (must be at least 1 hour)
     const durationInHours = parseInt(formData.duration);
     if (durationInHours < 1) {
       alert('Duration must be at least 1 hour.');
       return; // Prevent form submission
     }
 
-    // Check for date conflicts with existing events
-    const startDate = new Date(formData.start_date);
-    const endDate = new Date(formData.end_date);
-
-    if (startDate > endDate) {
-      alert('End date cannot be before the start date.');
-      return; // Prevent form submission
-    }
-
-    const hasConflict = existingEvents.some(event => {
-      const eventStartDate = new Date(event.start_date);
-      const eventEndDate = new Date(event.end_date);
-      return (
-        event.location_id === formData.location_id &&
-        startDate < eventEndDate && // Check if new event ends after existing event starts
-        endDate > eventStartDate // Check if new event starts before existing event ends
-      );
-    });
-
-    if (hasConflict) {
-      alert('The venue has already been booked for the selected dates.');
-      return; // Prevent form submission
-    }
-
-    // Ensure data is in the correct format
-    const formattedStartDate = startDate.toISOString();
-    const formattedEndDate = endDate.toISOString();
+    const formattedStartDate = new Date(formData.start_date).toISOString();
+    const formattedEndDate = new Date(formData.end_date).toISOString();
 
     const eventData = {
       ...formData,
@@ -122,28 +99,26 @@ function EventForm() {
       end_date: formattedEndDate,
     };
 
-    // Log the data to check
-    console.log('Event Data being sent:', eventData);
-
     try {
-      const { data } = await API.post('/events', eventData);
-      console.log('Event created successfully:', data);
-      window.location.href = '/events';
+      // Update the existing event
+      await API.put(`/events/${id}`, eventData);
+      alert('Event updated successfully!');
+      navigate(`/events`); // Redirect to the event details page after update
     } catch (error) {
-      console.error('Error creating event:', error);
+      console.error('Error updating event:', error);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} style={styles.form}>
-      <h2>Create New Event</h2>
+      <h2>Edit Event</h2>
       <div className="form-row">
         <label>
           Event Name:
           <input
             type="text"
             name="event_name"
-            value={formData.event_name}
+            value={formData.event_name || ''}
             onChange={handleInputChange}
             required
           />
@@ -154,7 +129,7 @@ function EventForm() {
           Description:
           <textarea
             name="description"
-            value={formData.description}
+            value={formData.description || ''}
             onChange={handleInputChange}
             required
           />
@@ -166,7 +141,7 @@ function EventForm() {
           <input
             type="date"
             name="start_date"
-            value={formData.start_date}
+            value={formData.start_date || ''}
             onChange={handleInputChange}
             required
           />
@@ -178,7 +153,7 @@ function EventForm() {
           <input
             type="date"
             name="end_date"
-            value={formData.end_date}
+            value={formData.end_date || ''}
             onChange={handleInputChange}
             required
           />
@@ -189,7 +164,7 @@ function EventForm() {
           Location:
           <select
             name="location_id"
-            value={formData.location_id}
+            value={formData.location_id || ''}
             onChange={handleInputChange}
             required
           >
@@ -208,7 +183,7 @@ function EventForm() {
           <input
             type="number"
             name="available_slots"
-            value={formData.available_slots}
+            value={formData.available_slots || ''}
             onChange={handleInputChange}
             required
           />
@@ -220,14 +195,14 @@ function EventForm() {
           <input
             type="number"
             name="duration"
-            value={formData.duration}
+            value={formData.duration || ''}
             onChange={handleInputChange}
             required
           />
         </label>
       </div>
       <button type="submit" className="add-new-event-button">
-        Add New Event
+        Update Event
       </button>
     </form>
   );
@@ -244,4 +219,4 @@ const styles = {
   },
 };
 
-export default EventForm;
+export default EditEvent;

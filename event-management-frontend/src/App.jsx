@@ -2,18 +2,32 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import Navbar from "./components/Navbar";
-
 import Home from './pages/Home';
 import Register from './components/Register';
 import Login from './components/Login';
 import Dashboard from './pages/Dashboard';
 import EventList from './components/EventList';
 import EventDetails from './components/EventDetails';
-import EventForm from './components/EventForm';  // New component for creating events
-import BookingsList from './components/BookingsList'; // Import the new component
+import EventForm from './components/EventForm';  
+import EditEvent from './components/EditEvent'; // Import the new EditEvent component
+import BookingsList from './components/BookingsList'; 
+import LocationList from './components/LocationList'; 
 import Profile from './components/Profile';
 import NotFound from './pages/NotFound';
-import { isAuthenticated } from './services/auth';
+import { isAuthenticated, getCurrentUser } from './services/auth';
+
+// PrivateRoute component for role-based access
+const PrivateRoute = ({ element, role }) => {
+  const user = getCurrentUser();
+  const userRole = user ? user.role : null;
+  return (
+    isAuthenticated() && (!role || userRole === role) ? (
+      element
+    ) : (
+      <Navigate to="/login" />
+    )
+  );
+};
 
 function App() {
   return (
@@ -23,12 +37,14 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={!isAuthenticated() ? <Register /> : <Navigate to="/dashboard" />} />
         <Route path="/login" element={!isAuthenticated() ? <Login /> : <Navigate to="/dashboard" />} />
-        <Route path="/dashboard" element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" />} />
-        <Route path="/events" element={isAuthenticated() ? <EventList /> : <Navigate to="/login" />} />
-        <Route path="/events/new" element={isAuthenticated() ? <EventForm /> : <Navigate to="/login" />} /> {/* New route for creating events */}
-        <Route path="/events/:id" element={isAuthenticated() ? <EventDetails /> : <Navigate to="/login" />} />
-        <Route path="/bookings" element={isAuthenticated() ? <BookingsList /> : <Navigate to="/login" />} />
-        <Route path="/profile" element={isAuthenticated() ? <Profile /> : <Navigate to="/login" />} />
+        <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+        <Route path="/events" element={<PrivateRoute element={<EventList />} />} />
+        <Route path="/events/new" element={<PrivateRoute element={<EventForm />} />} />
+        <Route path="/events/:id" element={<PrivateRoute element={<EventDetails />} />} />
+        <Route path="/events/edit/:id" element={<PrivateRoute element={<EditEvent />} />} /> {/* Added edit route */}
+        <Route path="/bookings" element={<PrivateRoute element={<BookingsList />} />} />
+        <Route path="/locations" element={<PrivateRoute element={<LocationList />} role="organizer" />} />
+        <Route path="/profile" element={<PrivateRoute element={<Profile />} />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

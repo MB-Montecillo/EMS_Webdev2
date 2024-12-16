@@ -4,53 +4,158 @@ import { Link } from 'react-router-dom';
 
 function EventList() {
   const [events, setEvents] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [userRole, setUserRole] = useState(null);
+  const userId = localStorage.getItem('userId');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const eventsPerPage = 10;
 
   useEffect(() => {
-    async function fetchEvents() {
+    const fetchUserRole = async () => {
       try {
-        const { data } = await API.get('/events');
+        const { data } = await API.get(`/users/${userId}`);
+        setUserRole(data.role);
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+    };
+
+    const fetchLocations = async () => {
+      try {
+        const { data } = await API.get('/locations');
+        setLocations(data);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+
+    fetchUserRole();
+    fetchLocations();
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const { data } = await API.get(`/events?page=${currentPage}&perPage=${eventsPerPage}`);
         setEvents(data);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
-    }
+    };
+
     fetchEvents();
-  }, []);
+  }, [currentPage]);
 
   const handleDeleteEvent = async (eventId) => {
     try {
       await API.delete(`/events/${eventId}`);
-      setEvents(events.filter(event => event.event_id !== eventId)); // Remove the deleted event from the list
+      setEvents(events.filter(event => event.event_id !== eventId));
     } catch (error) {
       console.error('Error deleting event:', error);
     }
   };
 
+  const filteredEvents = events.filter(event => {
+    const location = locations.find(loc => loc.location_id === event.location_id);
+    const locationName = location ? location.location_name.toLowerCase() : '';
+    
+    return (
+      event.event_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      locationName.includes(searchQuery.toLowerCase()) ||
+      new Date(event.start_date).toLocaleDateString().includes(searchQuery) ||
+      new Date(event.end_date).toLocaleDateString().includes(searchQuery)
+    );
+  });
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Generate pagination numbers (for pages 1, 2, 3, etc.)
+  const totalPages = Math.ceil(filteredEvents.length / eventsPerPage);
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
   return (
     <div style={styles.container}>
-      <h2>Current Events</h2>
-      <button style={styles.addButton}>
-        <Link to="/events/new" style={{ ...styles.link, color: 'white' }}>Add New Event</Link>
-      </button>
+      <h2>Events</h2>
+
+      {/* Search Input */}
+      <input
+        type="text"
+        placeholder="Search events..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={styles.searchInput}
+      />
+
+      {userRole === 'organizer' && (
+        <button style={styles.addButton}>
+          <Link to="/events/new" style={{ ...styles.link, color: 'white' }}>Add New Event</Link>
+        </button>
+      )}
 
       <ul style={styles.list}>
-        {events.map((event) => (
-          <li key={event.event_id} style={styles.listItem}>
-            <h3>{event.event_name}</h3>
-            <p>{event.description}</p>
-            <p>Date: {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}</p>
-            <p>Location: {event.location}</p>
-            <p>Available Slots: {event.available_slots}</p>
-            <Link to={`/events/${event.event_id}`} style={styles.link}>View Details</Link>
-            <button 
-              onClick={() => handleDeleteEvent(event.event_id)} 
-              style={styles.deleteButton}
-            >
-              Delete Event
-            </button>
-          </li>
-        ))}
+        {filteredEvents
+          .slice((currentPage - 1) * eventsPerPage, currentPage * eventsPerPage)
+          .map((event) => {
+            const location = locations.find(loc => loc.location_id === event.location_id);
+            const isFullyBooked = event.available_slots <= 0;
+            
+            return (
+              <li key={event.event_id} style={styles.listItem}>
+                <h3>{event.event_name}</h3>
+                <p>{event.description}</p>
+                <p>
+                  Date: {new Date(event.start_date).toLocaleDateString()} -{' '}
+                  {new Date(event.end_date).toLocaleDateString()}
+                </p>
+                <p>Location: {location ? location.location_name : "Location not specified"}</p>
+                <p>Available Slots: {isFullyBooked ? 'Fully Booked' : event.available_slots}</p>
+                {!isFullyBooked && (
+                  <Link to={`/events/${event.event_id}`} style={styles.link}>
+                    View Details
+                  </Link>
+                )}
+                {Number(event.organizer_id) === Number(userId) && (
+                  <button
+                    onClick={() => handleDeleteEvent(event.event_id)}
+                    style={styles.deleteButton}
+                  >
+                    Delete Event
+                  </button>
+                )}
+                {Number(event.organizer_id) === Number(userId) && (
+                  <Link to={`/events/edit/${event.event_id}`}>
+                    <button style={styles.editButton}>
+                      Edit Event
+                    </button>
+                  </Link>
+                )}
+              </li>
+            );
+          })}
       </ul>
+
+      <div style={styles.pagination}>
+        {pageNumbers.map((number) => (
+          <button
+            key={number}
+            onClick={() => handlePageChange(number)}
+            style={styles.paginationButton}
+            disabled={currentPage === number}
+          >
+            {number}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -81,6 +186,15 @@ const styles = {
     border: 'none',
     borderRadius: '5px',
   },
+  editButton: {
+    marginLeft: '10px',
+    padding: '0.5rem 1rem',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  },
   deleteButton: {
     marginLeft: '10px',
     padding: '0.5rem 1rem',
@@ -89,6 +203,27 @@ const styles = {
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
+  },
+  searchInput: {
+    display: 'block',
+    marginBottom: '1rem',
+    padding: '0.5rem',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  pagination: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '1rem',
+  },
+  paginationButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    margin: '0 5px',
   },
 };
 

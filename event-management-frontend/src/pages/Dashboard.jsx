@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
 import API from '../services/api';
 import useStore from '../store/useStore';
@@ -13,6 +12,9 @@ function Dashboard() {
     eventSpotlight: null,
   });
 
+  const [userRole, setUserRole] = useState(null); // State to hold user role
+  const userId = localStorage.getItem('userId');
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -23,11 +25,14 @@ function Dashboard() {
         setEvents(eventsData.data);
         setBookings(bookingsData.data);
 
+        const userRoleResponse = await API.get(`/users/${userId}`);
+        setUserRole(userRoleResponse.data.role); // Set user role
+
         // Calculate overview
-        const totalEvents = eventsData.data.length;
-        const upcomingEvents = eventsData.data.filter(event => new Date(event.start_date) >= new Date()).slice(0, 5);
-        const totalBookings = bookingsData.data.length;
-        const upcomingBookings = bookingsData.data.filter(booking => new Date(booking.booking_date) >= new Date()).slice(0, 5);
+        const totalEvents = eventsData.data.length; // Total number of events
+        const upcomingEvents = eventsData.data.filter(event => new Date(event.start_date) >= new Date()).slice(0, 5); // Upcoming events
+        const totalBookings = bookingsData.data.length; // Total number of bookings (for all users)
+        const upcomingBookings = bookingsData.data.filter(booking => new Date(booking.booking_date) >= new Date()).slice(0, 5); // Upcoming bookings
         const eventSpotlight = eventsData.data.reduce((prev, current) => (prev.available_slots < current.available_slots ? prev : current), eventsData.data[0]);
 
         setOverview({
@@ -42,16 +47,20 @@ function Dashboard() {
       }
     }
     fetchData();
-  }, [setEvents, setBookings]);
+  }, [userId, setEvents, setBookings]);
 
   return (
     <div style={styles.container}>
       <h2>Dashboard</h2>
       <div style={styles.widgets}>
-        <div style={styles.widget}>
-          <h3>Total Events Created</h3>
-          <p>{overview.totalEvents}</p>
-        </div>
+        {/* Only show total events created for organizers */}
+        {userRole === 'organizer' && (
+          <div style={styles.widget}>
+            <h3>Total Events Created</h3>
+            <p>{overview.totalEvents}</p>
+          </div>
+        )}
+        
         <div style={styles.widget}>
           <h3>Upcoming Events</h3>
           <ul>
@@ -60,18 +69,29 @@ function Dashboard() {
             ))}
           </ul>
         </div>
-        <div style={styles.widget}>
-          <h3>Total Bookings</h3>
-          <p>{overview.totalBookings}</p>
-        </div>
+
+        {/* Show total bookings only for organizers */}
+        {userRole === 'organizer' && (
+          <div style={styles.widget}>
+            <h3>Total Bookings</h3>
+            <p>{overview.totalBookings}</p>
+          </div>
+        )}
+
         <div style={styles.widget}>
           <h3>Upcoming Bookings</h3>
           <ul>
-            {overview.upcomingBookings.map(booking => (
-              <li key={booking.booking_id}>Booking ID: {booking.booking_id} on {new Date(booking.booking_date).toLocaleDateString()}</li>
-            ))}
+            {overview.upcomingBookings.map(booking => {
+              const event = events.find(event => event.event_id === booking.event_id); // Find event by ID
+              return (
+                <li key={booking.booking_id}>
+                  {event ? event.event_name : 'Event Not Found'} on {new Date(booking.booking_date).toLocaleDateString()}
+                </li>
+              );
+            })}
           </ul>
         </div>
+        
         <div style={styles.widget}>
           <h3>Event Spotlight</h3>
           {overview.eventSpotlight && (
